@@ -81,7 +81,9 @@ Every field has a name, type, range, default value, and description.
 
 When a requirement changes, you update the data structure first, then propagate the change through every spec section that references the affected fields. This is what happened in the benchmark: the cancellation policy change touched 6 files and 29 lines, all traceable from the data structure outward.
 
-This process is not manual. Spec Grounding is designed to run inside AI coding agents, using a prompt chain and a domain knowledge base. Whether generating a new app or modifying an existing one, the workflow is the same: data structures serve as a binding contract. During generation, automated consistency checks run against the data structure definitions, catching deviations before they reach the code. The 6-file specification used in this benchmark — and its updated version for the tiered policy — were each generated in a single AI session, not written by hand.
+This process is not manual. Spec Grounding runs inside AI coding agents as a multi-stage pipeline: each stage receives the output of the previous stage as its input, so every decision is constrained by what has already been defined. A domain knowledge base supplies structural patterns for the target category (e.g., reservation systems, e-commerce, RPGs) — not as templates to copy, but as reference points that anchor the AI's output to proven data shapes.
+
+During generation, automated consistency checks verify that every field referenced in a specification actually exists in the data structure definitions, and that every defined field is accounted for in at least one specification. The human role is review and approval at stage boundaries; the AI handles expansion and cross-referencing. The 6-file specification used in this benchmark — and its updated version for the tiered policy — were each produced in a single AI session under this pipeline, not written by hand.
 
 ## The Benchmark
 
