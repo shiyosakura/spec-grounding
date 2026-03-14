@@ -83,13 +83,13 @@ When a requirement changes, you update the data structure first, then propagate 
 
 This process is not manual. Spec Grounding runs inside AI coding agents as a multi-stage pipeline: each stage receives the output of the previous stage as its input, so every decision is constrained by what has already been defined. A domain knowledge base supplies structural patterns for the target category (e.g., reservation systems, e-commerce, RPGs) — not as templates to copy, but as reference points that anchor the AI's output to proven data shapes.
 
-During generation, automated consistency checks verify that every field referenced in a specification actually exists in the data structure definitions, and that every defined field is accounted for in at least one specification. The human role is review and approval at stage boundaries; the AI handles expansion and cross-referencing. The 6-file specification used in this benchmark — and its updated version for the tiered policy — were each produced in a single AI session under this pipeline, not written by hand.
+During generation, automated consistency checks verify that every field referenced in a specification actually exists in the data structure definitions, and that every defined field is accounted for in at least one specification. The human role is review and approval at stage boundaries; the AI handles expansion and cross-referencing. The 6-file specification used in this benchmark — and its updated version for the tiered policy — were each produced through this pipeline with human involvement limited to review and approval, not written by hand.
 
 ## The Benchmark
 
 ### Setup
 
-1. **Baseline app**: A salon reservation system generated from a 6-file specification (SIP analysis + 3 data structure files + 2 detailed specs). 13 API routes, 6 screens, Next.js + TypeScript + SQLite. Built in a single pass, zero manual fixes.
+1. **Baseline app**: A salon reservation system generated from a 6-file specification (SIP analysis + 3 data structure files + 2 detailed specs). 13 API routes, 6 screens, Next.js + TypeScript + SQLite. Built through the pipeline, zero manual fixes.
 
 2. **Change request**: Switch from binary cancellation (penalty yes/no) to tiered cancellation (0% / 50% / 100% fee based on time remaining).
 
