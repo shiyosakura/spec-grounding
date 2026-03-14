@@ -1,0 +1,6 @@
+node_modules/
+.next/
+salon.db
+salon.db-shm
+salon.db-wal
+.env.test
