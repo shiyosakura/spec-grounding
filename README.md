@@ -2,7 +2,7 @@
 
 # Spec Grounding
 
-**Same AI. Same change request. With a spec: 7/7 passed. Without: 1/7.**
+**Same AI. Same change request. 5 runs each. With a spec: 35/35 passed. Without: 5/35.**
 
 The only difference was six Markdown files.
 
@@ -33,7 +33,17 @@ Both versions built successfully. Both understood the requirement. Then I ran 7 
 | Penalty limit blocks new reservations | PASS | PASS |
 | **Total** | **7/7** | **1/7** |
 
-> **Note on methodology:** This is a single run (N=1). LLM outputs are probabilistic — results may vary across runs. All prompts, specs, generated code, and test suites are included in this repository so you can reproduce and verify independently.
+I repeated this experiment 5 times independently — fresh generation each time, no prior results in context.
+
+| Trial | With Spec | Without Spec |
+|-------|:---------:|:------------:|
+| 1 | 7/7 | 1/7 |
+| 2 | 7/7 | 1/7 |
+| 3 | 7/7 | 1/7 |
+| 4 | 7/7 | 1/7 |
+| 5 | 7/7 | 1/7 |
+
+Zero variance across all 10 runs. Full details in [`benchmark/results/benchmark-n5-result.md`](benchmark/results/benchmark-n5-result.md).
 
 ## What Went Wrong
 
@@ -50,7 +60,7 @@ The spec explicitly defined `cancellation_fee` as an integer field storing yen a
 
 **Here's how one decision cascaded into six failures:** the vibe version stored only the rate (%) in the database, not the computed amount (¥). Its cancel endpoint did compute the yen amount in the response, but the reservation list API returned database columns as-is — so the `cancellation_fee` field simply didn't exist on reservation records. Every test that checked the persisted fee amount failed, not because the tier logic was wrong, but because the data wasn't where downstream code expected it.
 
-This is not a cherry-picked edge case. This is what happens every time the AI has to decide *what shape the data takes* without being told.
+This wasn't a one-off accident. In 5 independent runs, every vibe-coded version made the same choice: store `cancellation_fee_rate` (a percentage) instead of `cancellation_fee` (a yen amount). 0 out of 5 stored the computed amount. Without a data structure definition, the AI defaults to the same reasonable-but-wrong decision every time.
 
 ---
 
