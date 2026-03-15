@@ -1,4 +1,5 @@
 [日本語版はこちら](README.ja.md)
+
 # Spec Grounding
 
 **Same AI. Same change request. With a spec: 7/7 passed. Without: 1/7.**
@@ -131,17 +132,9 @@ The traceability viewer shows the three-layer structure — SIP analysis, data d
 
 ---
 
-## Why Data Structure Is the Bottleneck
-
-Code manipulates data. UI displays data. APIs transfer data. Everything depends on data structure.
-
-When you give an AI a natural language change request, the AI has to make dozens of implicit decisions about data structure: what fields to add, what types to use, what to store vs. what to compute on the fly. These decisions are reasonable in isolation, but they compound. A single field stored as a percentage instead of an amount breaks every downstream query, every UI display, every test.
-
-The debate about which AI model is "better at coding" misses the point. **The bottleneck is not the AI's intelligence — it's the absence of data structure decisions in the input.**
-
-A specification that fixes the data structure eliminates the AI's guesswork. Every section of the spec becomes a statement about data: this field exists, it has this type, this range, this default. The AI doesn't need to be creative. It just needs to follow the structure.
-
 ## How Spec Grounding Works
+
+Code manipulates data. UI displays data. APIs transfer data. Everything depends on data structure — yet when you give an AI a natural language change request, the AI has to make dozens of implicit decisions about it: what fields to add, what types to use, what to store vs. what to compute on the fly. These decisions are reasonable in isolation, but they compound. A single field stored as a percentage instead of an amount breaks every downstream query, every UI display, every test. **The bottleneck is not the AI's intelligence — it's the absence of data structure decisions in the input.**
 
 The idea of generating code from schemas is not new — schema-driven generation, TDD, and DSL-based approaches all exist. Spec Grounding differs in that the data structure doesn't produce code directly. It produces *human-reviewable specifications* as an intermediate layer: the data structure constrains the spec, and the spec constrains the code. This middle layer is where ambiguity gets caught — before it reaches the codebase.
 
@@ -171,9 +164,9 @@ Every field has a name, type, range, default value, and description.
 
 When a requirement changes, you update the data structure first, then propagate the change through every spec section that references the affected fields. This is what happened in the benchmark: the cancellation policy change touched 6 files and 29 lines, all traceable from the data structure outward.
 
-This process is not manual. Spec Grounding runs inside AI coding agents as a multi-stage pipeline: each stage receives the output of the previous stage as its input, so every decision is constrained by what has already been defined. A domain knowledge base supplies structural patterns for the target category (e.g., reservation systems, e-commerce, sales management) — not as templates to copy, but as reference points that anchor the AI's output to proven data shapes.
+### The specs themselves are AI-generated
 
-During generation, automated consistency checks verify that every field referenced in a specification actually exists in the data structure definitions, and that every defined field is accounted for in at least one specification. The human role is review and approval at stage boundaries; the AI handles expansion and cross-referencing.
+Writing 800 lines of specification by hand would defeat the purpose. The specifications in this repository were generated using Claude Code with a set of domain knowledge files and a multi-agent workflow. The knowledge base contains structural patterns for target categories (e.g., reservation systems, sales management), and each agent stage (SIP analysis → data structure definition → detailed specification) takes the output of the previous stage as its input. Automated consistency checks verify that every field reference resolves to a defined data structure and that every defined field appears in at least one specification. The human role is review and approval at stage boundaries — not authoring.
 
 ## Key Insight
 
@@ -194,8 +187,9 @@ benchmark/
 ├── app-sales/               # BtoB: generated from specification (16 screens, 29 APIs)
 ├── tests/                   # Salon: 7 behavioral tests (Vitest)
 └── results/                 # Benchmark result reports
-docs/
-└── viewer/                  # Interactive traceability viewer (GitHub Pages)
+
+# Interactive traceability viewer (separate repository):
+# https://shiyosakura.github.io/githubpage/
 ```
 
 ## Reproduce the Benchmark
