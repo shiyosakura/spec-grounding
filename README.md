@@ -142,7 +142,9 @@ A specification that fixes the data structure eliminates the AI's guesswork. Eve
 
 ## How Spec Grounding Works
 
-Spec Grounding is a methodology for writing specifications that are grounded in data structure definitions. The process has three layers, each depending on the one above:
+The idea of generating code from schemas is not new — schema-driven generation, TDD, and DSL-based approaches all exist. Spec Grounding differs in that the data structure doesn't produce code directly. It produces *human-reviewable specifications* as an intermediate layer: the data structure constrains the spec, and the spec constrains the code. This middle layer is where ambiguity gets caught — before it reaches the codebase.
+
+The process has three layers, each depending on the one above:
 
 ```
 SIP (Screen–Input–Process analysis)
