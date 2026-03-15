@@ -127,29 +127,3 @@ export function hoursFromNow(hours: number): string {
   return formatDatetime(d);
 }
 
-/**
- * Return a datetime string N hours from now, adjusted to fall on a weekday
- * (Mon-Sat) during working hours (10:00-18:00) so staff is available.
- * Adds minuteOffset to avoid collisions between tests.
- */
-export function workingHoursFromNow(hours: number, minuteOffset = 0): string {
-  const d = new Date(Date.now() + hours * 60 * 60 * 1000 + minuteOffset * 60 * 1000);
-
-  // Move past Sunday (day 0) to Monday
-  while (d.getDay() === 0) {
-    d.setDate(d.getDate() + 1);
-  }
-
-  // Clamp to working hours
-  if (d.getHours() < 9) d.setHours(10, 0, 0, 0);
-  if (d.getHours() >= 18) {
-    d.setDate(d.getDate() + 1);
-    d.setHours(10, 0, 0, 0);
-    // Re-check Sunday
-    while (d.getDay() === 0) {
-      d.setDate(d.getDate() + 1);
-    }
-  }
-
-  return formatDatetime(d);
-}

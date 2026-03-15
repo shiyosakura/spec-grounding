@@ -23,7 +23,7 @@ import {
   cancelReservation,
   noshowReservation,
   getReservations,
-  workingHoursFromNow,
+  hoursFromNow,
 } from "./helpers";
 
 // ─── Menu prices (from seed data) ───
@@ -40,7 +40,7 @@ const STANDARD_CUT_PRICE = 4500;
 describe("Tiered Cancellation Fee", () => {
   test("Cancel 72h+ before → fee = ¥0, no penalty", async () => {
     const { customerId, phone } = await createCustomer("Test Free Cancel");
-    const start = workingHoursFromNow(100); // ~4 days
+    const start = hoursFromNow(100); // ~4 days → ≥72h tier (0% fee)
     const { reservationId } = await createReservation(customerId, start);
     expect(reservationId).toBeDefined();
 
@@ -61,7 +61,7 @@ describe("Tiered Cancellation Fee", () => {
 
   test("Cancel 24–72h before → fee = 50% of total price, penalty +1", async () => {
     const { customerId, phone } = await createCustomer("Test Half Fee");
-    const start = workingHoursFromNow(48); // 2 days
+    const start = hoursFromNow(48); // 2 days → 24-72h tier (50% fee)
     const { reservationId } = await createReservation(customerId, start);
     expect(reservationId).toBeDefined();
 
@@ -82,7 +82,7 @@ describe("Tiered Cancellation Fee", () => {
 
   test("Cancel < 24h before → fee = 100% of total price, penalty +1", async () => {
     const { customerId, phone } = await createCustomer("Test Full Fee");
-    const start = workingHoursFromNow(6); // 6 hours
+    const start = hoursFromNow(6); // 6 hours — use raw offset to avoid weekday adjustment
     const { reservationId } = await createReservation(customerId, start);
     expect(reservationId).toBeDefined();
 
@@ -109,7 +109,7 @@ describe("Tiered Cancellation Fee", () => {
 describe("No-Show", () => {
   test("No-show → fee = 100% of total price, penalty +1", async () => {
     const { customerId, phone } = await createCustomer("Test NoShow");
-    const start = workingHoursFromNow(120); // 5 days (avoid conflicts with test 1)
+    const start = hoursFromNow(120); // 5 days
     const { reservationId } = await createReservation(customerId, start);
     expect(reservationId).toBeDefined();
 
@@ -136,12 +136,12 @@ describe("No-Show", () => {
 describe("Reservation Modification", () => {
   test("Modification cancels old reservation with fee = ¥0, no penalty", async () => {
     const { customerId, phone } = await createCustomer("Test Modify");
-    const originalStart = workingHoursFromNow(8); // within 24h
+    const originalStart = hoursFromNow(8); // within 24h
     const { reservationId: originalId } = await createReservation(customerId, originalStart);
     expect(originalId).toBeDefined();
 
     // Create a new reservation as modification of the original (different day to avoid conflict)
-    const newStart = workingHoursFromNow(144); // 6 days
+    const newStart = hoursFromNow(144); // 6 days
     const { reservationId: newId, status } = await createReservation(customerId, newStart, {
       modificationSourceId: originalId,
     });
@@ -173,7 +173,7 @@ describe("Reservation Modification", () => {
 describe("Cancellation Policy Master Data", () => {
   test("cancellation_fee field exists on reservation records", async () => {
     const { customerId } = await createCustomer("Test Policy Check");
-    const start = workingHoursFromNow(168); // 7 days
+    const start = hoursFromNow(168); // 7 days
     const { reservationId } = await createReservation(customerId, start);
     expect(reservationId).toBeDefined();
 
@@ -198,7 +198,7 @@ describe("Penalty Blocking", () => {
     // Burn through 3 penalties with < 24h cancellations (100% fee each)
     // Use different time offsets (3h, 4h, 5h) to avoid slot conflicts
     for (let i = 0; i < 3; i++) {
-      const start = workingHoursFromNow(3 + i);
+      const start = hoursFromNow(3 + i);
       const { reservationId } = await createReservation(customerId, start);
       expect(reservationId).toBeDefined();
       const result = await cancelReservation(reservationId!);
@@ -206,7 +206,7 @@ describe("Penalty Blocking", () => {
     }
 
     // 4th reservation should be blocked
-    const start = workingHoursFromNow(192); // 8 days
+    const start = hoursFromNow(192); // 8 days
     const { status } = await createReservation(customerId, start);
     expect(status).toBe(400);
   });
