@@ -1,5 +1,5 @@
 [English version](README.md)
-# Spec Grounding -データ構造なくして仕様書なし
+# Spec Grounding -AIにはデータの形を先に決めてから頼め
 
 **同じAI、同じ変更依頼。仕様書を渡したら7/7合格。渡さなければ1/7。**
 
