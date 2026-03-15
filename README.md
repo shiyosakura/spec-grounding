@@ -1,3 +1,4 @@
+[日本語版はこちら](README.ja.md)
 # Spec Grounding
 
 **Same AI. Same change request. With a spec: 7/7 passed. Without: 1/7.**
