@@ -12,12 +12,16 @@ Vibe coding works surprisingly well for generating an initial app. The problem s
 
 I asked the same AI model (Claude Opus 4.6) to make the same change to a salon reservation system: switch from a simple binary cancellation policy to a tiered one (free if 72h+ before, 50% fee if 24–72h, 100% if under 24h).
 
-One version received the change request as a natural language instruction. The other received an updated 6-file specification.
+One version received the change request as a natural language instruction:
+
+> "Change the cancellation policy of this salon reservation app to a tiered system. Currently it's just a binary choice of whether it's a same-day cancellation, but I want it so that cancellations 72+ hours before are free, 24–72 hours before incur a 50% fee, and under 24 hours incur a 100% fee. No-shows are 100%. No fee for reservation modifications."
+
+The other received an updated 6-file specification (~800 lines) defining exactly what data fields to add, what types they have, and how each process references them.
 
 Both versions built successfully. Both understood the requirement. Then I ran 7 behavioral tests:
 
 | Test | With Spec | Without Spec |
-|---|:---:|:---:|
+|------|:---------:|:------------:|
 | Cancel 72h+ before → fee = ¥0, no penalty | PASS | FAIL |
 | Cancel 24–72h before → fee = 50%, penalty +1 | PASS | FAIL |
 | Cancel < 24h before → fee = 100%, penalty +1 | PASS | FAIL |
@@ -26,6 +30,8 @@ Both versions built successfully. Both understood the requirement. Then I ran 7 
 | `cancellation_fee` field exists on record | PASS | FAIL |
 | Penalty limit blocks new reservations | PASS | PASS |
 | **Total** | **7/7** | **1/7** |
+
+> **Note on methodology:** This is a single run (N=1). LLM outputs are probabilistic — results may vary across runs. All prompts, specs, generated code, and test suites are included in this repository so you can reproduce and verify independently.
 
 ## What Went Wrong
 
@@ -38,7 +44,9 @@ The difference was a single data structure decision:
 | What gets stored | `cancellation_fee` = amount in yen (¥2,250) | `cancellation_fee_rate` = percentage (50) |
 | Policy storage | Dedicated `cancellation_policy` table | Key-value pairs in `system_settings` |
 
-The spec explicitly defined `cancellation_fee` as an integer field storing yen amounts. Without that definition, the AI made a reasonable but different choice — storing the rate instead of the amount. One design decision, six test failures.
+The spec explicitly defined `cancellation_fee` as an integer field storing yen amounts. Without that definition, the AI made a reasonable but different choice — storing the rate instead of the amount.
+
+**Here's how one decision cascaded into six failures:** the vibe version stored only the rate (%) in the database, not the computed amount (¥). Its cancel endpoint did compute the yen amount in the response, but the reservation list API returned database columns as-is — so the `cancellation_fee` field simply didn't exist on reservation records. Every test that checked the persisted fee amount failed, not because the tier logic was wrong, but because the data wasn't where downstream code expected it.
 
 This is not a cherry-picked edge case. This is what happens every time the AI has to decide *what shape the data takes* without being told.
 
@@ -53,7 +61,7 @@ The salon reservation system was small — 6 screens, 13 APIs. Can the same appr
 I generated a **BtoB Sales Management System** from 8 specification files (2,708 lines of spec):
 
 | | Salon Reservation | BtoB Sales Management | Scale |
-|---|:---:|:---:|:---:|
+|---|:-:|:-:|:-:|
 | Spec files | 6 | 8 | 1.3x |
 | Spec lines | ~800 | 2,708 | 3.4x |
 | Screens | 6 | 16 | 2.7x |
@@ -64,15 +72,7 @@ I generated a **BtoB Sales Management System** from 8 specification files (2,708
 
 16 screens covering the full order-to-cash cycle: quotations, orders, inventory, shipping, invoicing, payments, and master data management.
 
-<p align="center">
-  <img src="img/dashboard.jpg" width="800" alt="Dashboard — BtoB Sales Management System" />
-</p>
-<p align="center">
-  <img src="img/product.jpg" width="800" alt="Product Management with seed data" />
-</p>
-<p align="center">
-  <img src="img/quotation.jpg" width="800" alt="Quotation creation form with line items" />
-</p>
+> **Scope of this benchmark:** The salon case tests correctness (behavioral tests against a spec change). This case tests scale — whether the same methodology produces a buildable, structurally consistent application at 3x the complexity. Build success and structural consistency were verified; comprehensive behavioral testing (like the salon suite) has not been performed on this application.
 
 Every screen was generated from spec. Zero manual fixes. Single build pass.
 
@@ -86,7 +86,7 @@ Most specifications describe behavior in natural language. These specs are diffe
 
 All data references use backtick notation tied to defined field names. There are no ambiguous phrases like "the customer's name" — instead, every reference resolves to a specific table and column:
 
-```markdown
+```
 Join `Customer Master` to attach
 `Customer Master[quotation_data.customer_id].customer_name` to each row.
 ```
@@ -97,7 +97,7 @@ This means the AI never has to guess which table a piece of data comes from or w
 
 Specifications typically describe what happens when a condition is true. These specs describe both sides of every branch:
 
-```markdown
+```
 - If a special price record exists (`unit_price_master_id` ≥ 1)
   ⇒ Set `quotation_line_item.unit_price` to
     `Unit Price Master[unit_price_master_id].special_price`
@@ -113,7 +113,7 @@ No implicit defaults. No "otherwise, do nothing." The AI sees the complete decis
 Every process follows the same three-section format:
 
 | Section | Role | What it answers |
-|---|---|---|
+|---------|------|-----------------|
 | **§2** — Condition Judgments | Branching logic only. No data writes. | "Which path do we take?" |
 | **§3** — Data Update | Step-by-step data operations (retrieve, join, filter, write). | "What data changes?" |
 | **§4** — Display Updates | UI rendering rules: what to show, what format, what formula. | "What does the user see?" |
@@ -146,17 +146,18 @@ Spec Grounding is a methodology for writing specifications that are grounded in 
 
 ```
 SIP (Screen–Input–Process analysis)
-  ↓  determines what data is needed
+  ↓ determines what data is needed
 Data Structure Definitions
-  ↓  each spec section references concrete fields
+  ↓ each spec section references concrete fields
 Detailed Specifications
-  ↓  deterministic input for code generation
+  ↓ deterministic input for code generation
 Code
 ```
 
 **SIP** analyzes each screen to identify every piece of displayed information, every user action, and every background process. This produces a complete inventory of what data the system must handle.
 
 **Data Structure Definitions** formalize that inventory into three categories:
+
 - Master data (read-only reference tables)
 - Persistent data (saved state that changes over time)
 - Screen data (temporary data for UI rendering)
@@ -210,8 +211,8 @@ npm install && rm -f salon.db && npx next start -p 3098
 # 3. Run tests against each (in another terminal)
 cd benchmark/tests && npm install
 
-BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose  # spec: 7/7
-BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose  # vibe: 1/7
+BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose # spec: 7/7
+BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose # vibe: 1/7
 ```
 
 ### BtoB Sales Management — Scale
