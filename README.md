@@ -66,11 +66,11 @@ This wasn't a one-off accident. In 5 independent runs, every vibe-coded version 
 
 ---
 
-This repository demonstrates two claims: **reliability under change**, and **scalability to larger systems.** The salon benchmark above covers the first. The next section covers the second.
+This repository demonstrates two claims: **reliability under change**, and **scalability to larger systems.** The salon benchmark above covers the first. The next section covers both.
 
 ## Case 2: Does It Scale?
 
-The salon reservation system was small — 6 screens, 13 APIs. Can the same approach produce a larger system?
+The salon reservation system was small — 6 screens, 13 APIs. Can the same approach handle a larger system with real feature changes?
 
 I generated a **BtoB Sales Management System** from 8 specification files (2,708 lines of spec):
 
@@ -84,11 +84,23 @@ I generated a **BtoB Sales Management System** from 8 specification files (2,708
 | Build result | First pass | First pass | — |
 | Manual fixes | 0 | 0 | — |
 
-16 screens covering the full order-to-cash cycle: quotations, orders, inventory, shipping, invoicing, payments, and master data management.
+16 screens covering the full order-to-cash cycle: quotations, orders, inventory, shipping, invoicing, payments, and master data management. Every screen generated from spec. Zero manual fixes. Single build pass.
 
-> **Scope of this benchmark:** The salon case tests correctness (behavioral tests against a spec change). This case tests scale — whether the same methodology produces a buildable, structurally consistent application at 3x the complexity. Build success and structural consistency were verified; comprehensive behavioral testing (like the salon suite) has not been performed on this application.
+I then ran three different change requests against this system — each tested with both a spec-driven and a vibe-coded version:
 
-Every screen was generated from spec. Zero manual fixes. Single build pass.
+| Change | Modules Affected | With Spec | Without Spec |
+|--------|-----------------|:---------:|:------------:|
+| Volume discount (tiered pricing) | Orders | 7/7 | 7/7 |
+| Credit limit enforcement | Orders, Billing, Payments | 5/5 | 4/5 |
+| Returns + credit notes | Shipping, Inventory, Billing, Reconciliation | **8/8** | **2/8** |
+
+The pattern matches the salon finding. Simple, additive changes (volume discount) work fine without a spec — 7/7 on both sides. The gap appears when the change requires deciding *how to represent new data within existing structures*.
+
+In the returns case, the vibe prompt explicitly said "credit note (negative invoice)." The AI understood the concept but created a separate `credit_notes` table instead of storing negative amounts in the existing `invoices` table. This broke integration with billing, reconciliation, and outstanding balance calculation — 6 of 8 tests failed. Same pattern as the salon: understanding is not the problem; choosing the right data structure is.
+
+Full results: [returns](benchmark/results/returns-benchmark-2026-03-16.md) | [volume discount](benchmark/results/volume-discount-benchmark-2026-03-16.md) | [credit limit](benchmark/results/credit-limit-benchmark-2026-03-16.md)
+
+**[Explore the returns specification interactively →](https://shiyosakura.github.io/githubpage/sales-returns/)**
 
 ---
 
@@ -191,13 +203,17 @@ Both AIs understood the requirement. Both implemented the tiered logic correctly
 ```
 benchmark/
 ├── specs/
-│   ├── before/              # Original salon specification (6 files)
-│   ├── after/               # Updated specification with tiered cancellation
-│   └── sales/               # BtoB Sales Management specification (8 files)
-├── app-spec/                # Salon: generated from the updated specification
-├── app-vibe/                # Salon: generated from natural language instruction
-├── app-sales/               # BtoB: generated from specification (16 screens, 29 APIs)
-├── tests/                   # Salon: behavioral + field-agnostic tests (Vitest)
+│   ├── before/              # Salon: original specification (6 files)
+│   ├── after/               # Salon: tiered cancellation (6 files)
+│   ├── after-nomination/    # Salon: nomination fee addition (8 files)
+│   ├── sales/               # BtoB: base specification (8 files)
+│   ├── sales-after-credit/  # BtoB: credit limit enforcement
+│   ├── sales-after-discount/# BtoB: volume discount
+│   └── sales-after-returns/ # BtoB: returns + credit notes
+├── app-spec/                # Salon: generated from spec
+├── app-vibe/                # Salon: generated from natural language
+├── app-sales/               # BtoB: generated from spec (16 screens, 29 APIs)
+├── tests/                   # All test suites (Vitest)
 └── results/                 # Benchmark result reports
 
 # Interactive traceability viewer (separate repository):
@@ -227,17 +243,23 @@ BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose  # vibe: cancel
 BASE_URL=http://localhost:3097 npx vitest run cancellation-fee-agnostic nomination-fee
 ```
 
-### BtoB Sales Management — Scale
+### BtoB Sales Management — Change Tracking + Scale
 
 ```bash
+# 1. Start the BtoB app
 cd benchmark/app-sales
-npm install && npx next dev -p 3100
-# Open http://localhost:3100
+npm install && rm -f sales.db && npx next dev -p 3100
+
+# 2. Run BtoB tests (in another terminal)
+cd benchmark/tests && npm install
+BASE_URL=http://localhost:3100 npx vitest run returns --reporter=verbose
+BASE_URL=http://localhost:3100 npx vitest run volume-discount --reporter=verbose
+BASE_URL=http://localhost:3100 npx vitest run credit-limit --reporter=verbose
 ```
 
 ## Environment
 
-- AI Model: Claude Opus 4.6 — used for all code generation
+- AI Model: Claude Sonnet 4.6 (via Claude Code) — used for all benchmark code generation
 - Framework: Next.js 16, TypeScript, Tailwind CSS, SQLite (better-sqlite3)
 - Test framework: Vitest 3.2.4
 
