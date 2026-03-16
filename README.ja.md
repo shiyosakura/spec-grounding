@@ -211,6 +211,7 @@ benchmark/
 │   └── sales-after-returns/ # BtoB: 返品＋クレジットノート
 ├── app-spec/                # サロン: 仕様書から生成
 ├── app-vibe/                # サロン: 自然言語から生成
+├── app-sales*/              # BtoB: ベース + 3変更ペア（spec/vibe各1）
 ├── tests/                   # 全テストスイート（Vitest）
 └── results/                 # ベンチマーク結果レポート
 

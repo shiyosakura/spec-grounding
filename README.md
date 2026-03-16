@@ -212,6 +212,7 @@ benchmark/
 │   └── sales-after-returns/ # BtoB: returns + credit notes
 ├── app-spec/                # Salon: generated from spec
 ├── app-vibe/                # Salon: generated from natural language
+├── app-sales*/              # BtoB: base + 3 change pairs (spec/vibe each)
 ├── tests/                   # All test suites (Vitest)
 └── results/                 # Benchmark result reports
 
