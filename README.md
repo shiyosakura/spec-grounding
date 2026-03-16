@@ -205,7 +205,7 @@ benchmark/
 ├── specs/
 │   ├── before/              # Salon: original specification (6 files)
 │   ├── after/               # Salon: tiered cancellation (6 files)
-│   ├── after-nomination/    # Salon: nomination fee addition (8 files)
+│   ├── after-nomination/    # Salon: nomination fee addition (6 files)
 │   ├── sales/               # BtoB: base specification (8 files)
 │   ├── sales-after-credit/  # BtoB: credit limit enforcement
 │   ├── sales-after-discount/# BtoB: volume discount

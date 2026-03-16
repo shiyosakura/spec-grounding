@@ -118,7 +118,7 @@ npx vitest run --reporter=verbose
 
 ## Environment
 
-- Model: Claude Opus 4.6 (claude-opus-4-6) — both spec and vibe agents
+- Model: Claude Sonnet 4.6 — both spec and vibe agents
 - Framework: Next.js 16.1.6, TypeScript, SQLite (better-sqlite3)
 - Test framework: Vitest 3.2.4
 - Baseline app: 13 API routes, 6 screens, generated from before-spec in a single pass

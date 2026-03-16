@@ -1,7 +1,7 @@
 # BtoB Sales Management System — Generation Benchmark
 
 **Date:** 2026-03-14
-**Model:** Claude Opus 4.6
+**Model:** Claude Sonnet 4.6
 **Input:** 8 specification files, 2,708 lines total
 
 ---
@@ -92,6 +92,6 @@ See `benchmark/generation_prompt.md` for the exact instructions given to the AI.
 
 ## Environment
 
-- Model: Claude Opus 4.6 (claude-opus-4-6)
+- Model: Claude Sonnet 4.6
 - Framework: Next.js 16.1.6, TypeScript, SQLite (better-sqlite3)
 - Generation: 4 modules generated in parallel, foundation layer generated first

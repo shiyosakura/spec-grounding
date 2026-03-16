@@ -204,7 +204,7 @@ benchmark/
 ├── specs/
 │   ├── before/              # サロン: 変更前仕様書（6ファイル）
 │   ├── after/               # サロン: 段階制キャンセル（6ファイル）
-│   ├── after-nomination/    # サロン: 指名料追加（8ファイル）
+│   ├── after-nomination/    # サロン: 指名料追加（6ファイル）
 │   ├── sales/               # BtoB: ベース仕様書（8ファイル）
 │   ├── sales-after-credit/  # BtoB: 与信チェック厳格化
 │   ├── sales-after-discount/# BtoB: 数量値引き
