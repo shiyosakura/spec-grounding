@@ -100,7 +100,7 @@ AIは別に要件を誤解したわけではありません。どちらのケー
 
 詳細結果: [返品](benchmark/results/returns-benchmark-2026-03-16.md) | [数量値引き](benchmark/results/volume-discount-benchmark-2026-03-16.md) | [与信](benchmark/results/credit-limit-benchmark-2026-03-16.md)
 
-**[返品仕様書のトレーサビリティを確認 →](https://shiyosakura.github.io/githubpage/sales-returns/)**
+**[返品仕様書のトレーサビリティを確認 →](https://shiyosakura.github.io/githubpage/)**
 
 ---
 

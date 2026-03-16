@@ -100,7 +100,7 @@ In the returns case, the vibe prompt explicitly said "credit note (negative invo
 
 Full results: [returns](benchmark/results/returns-benchmark-2026-03-16.md) | [volume discount](benchmark/results/volume-discount-benchmark-2026-03-16.md) | [credit limit](benchmark/results/credit-limit-benchmark-2026-03-16.md)
 
-**[Explore the returns specification interactively →](https://shiyosakura.github.io/githubpage/sales-returns/)**
+**[Explore the returns specification interactively →](https://shiyosakura.github.io/githubpage/)**
 
 ---
 
