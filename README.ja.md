@@ -44,6 +44,9 @@
 
 全10回を通じて分散ゼロ。詳細は [`benchmark/results/benchmark-n5-result.md`](benchmark/results/benchmark-n5-result.md) を参照。
 
+テストがフィールド名に依存していないことを確認するため、キャンセル料テストをフィールド名非依存の手法で再実施しました。特定のフィールド名をチェックする代わりに、レスポンスの全数値フィールドを走査して期待される円金額を検出する方式です。結果: Spec版 3/3、Vibe版 1/3 — 同じ差が出ました。同じ手法を単純な変更（¥500の指名料追加）に適用すると 3/3 vs 3/3で差は出ません。差が出るのはデータ構造の判断が非自明な場合だけです。詳細は [`benchmark/results/field-agnostic-benchmark-2026-03-16.md`](benchmark/results/field-agnostic-benchmark-2026-03-16.md) を参照。
+
+
 ## 何が起きたのか
 
 AIは別に要件を誤解したわけではありません。どちらのケースでも段階制ロジックを正しく実装していました。
@@ -193,7 +196,7 @@ benchmark/
 ├── app-spec/                # サロン: 更新仕様書から生成
 ├── app-vibe/                # サロン: 自然言語指示から生成
 ├── app-sales/               # BtoB: 仕様書から生成（16画面・29 API）
-├── tests/                   # サロン: 振る舞いテスト7本（Vitest）
+├── tests/                   # サロン: 振る舞い + フィールド名非依存テスト（Vitest）
 └── results/                 # ベンチマーク結果レポート
 
 # インタラクティブ・トレーサビリティビューア（別リポジトリ）:
@@ -216,8 +219,11 @@ npm install && rm -f salon.db && npx next start -p 3098
 # 3. テスト実行（別ターミナル）
 cd benchmark/tests && npm install
 
-BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose # spec: 7/7
-BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose # vibe: 1/7
+BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose  # spec: 全テスト合格
+BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose  # vibe: キャンセル料テスト失敗
+
+# フィールド名非依存テストのみ実行
+BASE_URL=http://localhost:3097 npx vitest run cancellation-fee-agnostic nomination-fee
 ```
 
 ### BtoB販売管理 — スケール

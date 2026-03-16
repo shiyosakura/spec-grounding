@@ -45,6 +45,8 @@ I repeated this experiment 5 times independently — fresh generation each time,
 
 Zero variance across all 10 runs. Full details in [`benchmark/results/benchmark-n5-result.md`](benchmark/results/benchmark-n5-result.md).
 
+To verify this result isn't an artifact of field-name assumptions in the test suite, I re-ran the cancellation tests using a field-name-agnostic method: instead of checking specific field names, the test scans all numeric fields in the response for the expected yen amount. Spec: 3/3. Vibe: 1/3 — the same gap. Applying the identical method to a simpler change (adding a ¥500 nomination fee) showed no difference: 3/3 vs 3/3. The gap appears only when the change requires a non-obvious data structure decision. Details in [`benchmark/results/field-agnostic-benchmark-2026-03-16.md`](benchmark/results/field-agnostic-benchmark-2026-03-16.md).
+
 ## What Went Wrong
 
 The AI didn't misunderstand the requirement. It implemented the tiered logic correctly in both cases.
@@ -195,7 +197,7 @@ benchmark/
 ├── app-spec/                # Salon: generated from the updated specification
 ├── app-vibe/                # Salon: generated from natural language instruction
 ├── app-sales/               # BtoB: generated from specification (16 screens, 29 APIs)
-├── tests/                   # Salon: 7 behavioral tests (Vitest)
+├── tests/                   # Salon: behavioral + field-agnostic tests (Vitest)
 └── results/                 # Benchmark result reports
 
 # Interactive traceability viewer (separate repository):
@@ -218,8 +220,11 @@ npm install && rm -f salon.db && npx next start -p 3098
 # 3. Run tests against each (in another terminal)
 cd benchmark/tests && npm install
 
-BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose # spec: 7/7
-BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose # vibe: 1/7
+BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose  # spec: all pass
+BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose  # vibe: cancellation fees fail
+
+# Run only field-agnostic tests
+BASE_URL=http://localhost:3097 npx vitest run cancellation-fee-agnostic nomination-fee
 ```
 
 ### BtoB Sales Management — Scale
