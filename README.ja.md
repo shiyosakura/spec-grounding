@@ -211,7 +211,6 @@ benchmark/
 │   └── sales-after-returns/ # BtoB: 返品＋クレジットノート
 ├── app-spec/                # サロン: 仕様書から生成
 ├── app-vibe/                # サロン: 自然言語から生成
-├── app-sales/               # BtoB: 仕様書から生成（16画面・29 API）
 ├── tests/                   # 全テストスイート（Vitest）
 └── results/                 # ベンチマーク結果レポート
 
@@ -244,16 +243,14 @@ BASE_URL=http://localhost:3097 npx vitest run cancellation-fee-agnostic nominati
 
 ### BtoB販売管理 — 変更追従 + スケール
 
-```bash
-# 1. BtoBアプリを起動
-cd benchmark/app-sales
-npm install && rm -f sales.db && npx next dev -p 3100
+BtoBアプリ本体はこのリポジトリには含まれていません（仕様書から再生成可能です）。再現するには `benchmark/specs/sales/` からアプリを生成し、テストを実行してください。
 
-# 2. BtoBテスト実行（別ターミナル）
+```bash
+# 起動中のBtoBアプリに対してテスト実行
 cd benchmark/tests && npm install
-BASE_URL=http://localhost:3100 npx vitest run returns --reporter=verbose
-BASE_URL=http://localhost:3100 npx vitest run volume-discount --reporter=verbose
-BASE_URL=http://localhost:3100 npx vitest run credit-limit --reporter=verbose
+BASE_URL=http://localhost:3001 npx vitest run returns --reporter=verbose
+BASE_URL=http://localhost:3001 npx vitest run volume-discount --reporter=verbose
+BASE_URL=http://localhost:3001 npx vitest run credit-limit --reporter=verbose
 ```
 
 ## 環境

@@ -212,7 +212,6 @@ benchmark/
 │   └── sales-after-returns/ # BtoB: returns + credit notes
 ├── app-spec/                # Salon: generated from spec
 ├── app-vibe/                # Salon: generated from natural language
-├── app-sales/               # BtoB: generated from spec (16 screens, 29 APIs)
 ├── tests/                   # All test suites (Vitest)
 └── results/                 # Benchmark result reports
 
@@ -245,16 +244,14 @@ BASE_URL=http://localhost:3097 npx vitest run cancellation-fee-agnostic nominati
 
 ### BtoB Sales Management — Change Tracking + Scale
 
-```bash
-# 1. Start the BtoB app
-cd benchmark/app-sales
-npm install && rm -f sales.db && npx next dev -p 3100
+The BtoB app is not included in this repository (it can be regenerated from the specs). To reproduce: generate an app from `benchmark/specs/sales/`, then run tests against it.
 
-# 2. Run BtoB tests (in another terminal)
+```bash
+# Run BtoB tests against a running app
 cd benchmark/tests && npm install
-BASE_URL=http://localhost:3100 npx vitest run returns --reporter=verbose
-BASE_URL=http://localhost:3100 npx vitest run volume-discount --reporter=verbose
-BASE_URL=http://localhost:3100 npx vitest run credit-limit --reporter=verbose
+BASE_URL=http://localhost:3001 npx vitest run returns --reporter=verbose
+BASE_URL=http://localhost:3001 npx vitest run volume-discount --reporter=verbose
+BASE_URL=http://localhost:3001 npx vitest run credit-limit --reporter=verbose
 ```
 
 ## Environment
