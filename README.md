@@ -12,7 +12,7 @@ The only difference was six Markdown files.
 
 Vibe coding works surprisingly well for generating an initial app. The problem starts when you need to change something.
 
-I asked the same AI model (Claude Opus 4.6) to make the same change to a salon reservation system: switch from a simple binary cancellation policy to a tiered one (free if 72h+ before, 50% fee if 24–72h, 100% if under 24h).
+I asked the same AI model (Claude Sonnet 4.6 via Claude Code) to make the same change to a salon reservation system: switch from a simple binary cancellation policy to a tiered one (free if 72h+ before, 50% fee if 24–72h, 100% if under 24h).
 
 One version received the change request as a natural language instruction:
 
