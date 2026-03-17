@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+    <filter id="glow-green">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#3fb950" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow-red">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#f85149" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="540" fill="url(#bg)" rx="12"/>
+
+  <!-- Title -->
+  <text x="450" y="42" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="600">Same requirement: "Add tiered cancellation fees"</text>
+  <text x="450" y="64" text-anchor="middle" fill="#8b949e" font-size="13">Both AIs understood the requirement. Both implemented the logic correctly.</text>
+
+  <!-- Divider line -->
+  <line x1="450" y1="85" x2="450" y2="500" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- LEFT: With Spec -->
+  <text x="225" y="105" text-anchor="middle" fill="#3fb950" font-size="15" font-weight="600">With Spec</text>
+
+  <!-- Step 1: Data decision -->
+  <rect x="55" y="120" width="340" height="52" rx="8" fill="#0d1117" stroke="#3fb950" stroke-width="1.5" filter="url(#glow-green)"/>
+  <text x="225" y="143" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="500">Spec defines the field:</text>
+  <text x="225" y="163" text-anchor="middle" fill="#3fb950" font-size="14" font-weight="600" font-family="'Cascadia Code', 'Fira Code', monospace">cancellation_fee = 2250</text>
+
+  <!-- Arrow -->
+  <line x1="225" y1="172" x2="225" y2="200" stroke="#3fb950" stroke-width="1.5"/>
+  <polygon points="225,200 220,190 230,190" fill="#3fb950"/>
+
+  <!-- Step 2 -->
+  <rect x="55" y="205" width="340" height="44" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+  <text x="225" y="225" text-anchor="middle" fill="#c9d1d9" font-size="13">Stores the <tspan fill="#3fb950" font-family="'Cascadia Code', monospace" font-size="12">amount</tspan> in DB</text>
+  <text x="225" y="242" text-anchor="middle" fill="#8b949e" font-size="11">0, 2250, 4500</text>
+
+  <!-- Arrow -->
+  <polygon points="225,268 220,258 230,258" fill="#3fb950"/>
+
+  <!-- Step 3 -->
+  <rect x="55" y="273" width="340" height="44" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+  <text x="225" y="293" text-anchor="middle" fill="#c9d1d9" font-size="13">List API returns <tspan fill="#3fb950" font-family="'Cascadia Code', monospace" font-size="12">cancellation_fee</tspan></text>
+  <text x="225" y="310" text-anchor="middle" fill="#8b949e" font-size="11">field exists on every record</text>
+
+  <!-- Arrow -->
+  <polygon points="225,336 220,326 230,326" fill="#3fb950"/>
+
+  <!-- Result -->
+  <rect x="105" y="341" width="240" height="60" rx="10" fill="#0d1117" stroke="#3fb950" stroke-width="2" filter="url(#glow-green)"/>
+  <text x="225" y="370" text-anchor="middle" fill="#3fb950" font-size="28" font-weight="700">7 / 7</text>
+  <text x="225" y="391" text-anchor="middle" fill="#3fb950" font-size="13" font-weight="500">all tests pass</text>
+
+
+  <!-- RIGHT: Without Spec -->
+  <text x="675" y="105" text-anchor="middle" fill="#f85149" font-size="15" font-weight="600">Without Spec (Vibe)</text>
+
+  <!-- Step 1: Data decision -->
+  <rect x="505" y="120" width="340" height="52" rx="8" fill="#0d1117" stroke="#f85149" stroke-width="1.5" filter="url(#glow-red)"/>
+  <text x="675" y="143" text-anchor="middle" fill="#e6edf3" font-size="13" font-weight="500">AI decides the field:</text>
+  <text x="675" y="163" text-anchor="middle" fill="#f85149" font-size="14" font-weight="600" font-family="'Cascadia Code', 'Fira Code', monospace">cancellation_fee_rate = 50</text>
+
+  <!-- Arrow -->
+  <polygon points="675,200 670,190 680,190" fill="#f85149"/>
+
+  <!-- Step 2 -->
+  <rect x="505" y="205" width="340" height="44" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+  <text x="675" y="225" text-anchor="middle" fill="#c9d1d9" font-size="13">Stores the <tspan fill="#f85149" font-family="'Cascadia Code', monospace" font-size="12">rate</tspan> (%) in DB</text>
+  <text x="675" y="242" text-anchor="middle" fill="#8b949e" font-size="11">0, 50, 100</text>
+
+  <!-- Arrow -->
+  <polygon points="675,268 670,258 680,258" fill="#f85149"/>
+
+  <!-- Step 3 -->
+  <rect x="505" y="273" width="340" height="44" rx="8" fill="#0d1117" stroke="#30363d" stroke-width="1"/>
+  <text x="675" y="293" text-anchor="middle" fill="#c9d1d9" font-size="13">List API returns DB columns as-is</text>
+  <text x="675" y="310" text-anchor="middle" fill="#f85149" font-size="11">no cancellation_fee field exists</text>
+
+  <!-- Arrow -->
+  <polygon points="675,336 670,326 680,326" fill="#f85149"/>
+
+  <!-- Result -->
+  <rect x="555" y="341" width="240" height="60" rx="10" fill="#0d1117" stroke="#f85149" stroke-width="2" filter="url(#glow-red)"/>
+  <text x="675" y="370" text-anchor="middle" fill="#f85149" font-size="28" font-weight="700">1 / 7</text>
+  <text x="675" y="391" text-anchor="middle" fill="#f85149" font-size="13" font-weight="500">6 tests fail</text>
+
+
+  <!-- Bottom insight -->
+  <rect x="130" y="430" width="640" height="76" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="450" y="454" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="500">The logic was correct in both versions.</text>
+  <text x="450" y="475" text-anchor="middle" fill="#8b949e" font-size="13">One data-type decision — amount vs. rate — cascaded into 6 failures.</text>
+  <text x="450" y="496" text-anchor="middle" fill="#8b949e" font-size="13">This pattern repeated across all 5 runs: <tspan fill="#3fb950" font-weight="600">35/35</tspan> vs <tspan fill="#f85149" font-weight="600">5/35</tspan></text>
+
+  <!-- Label: "The only difference" -->
+  <text x="450" y="148" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="500">THE ONLY DIFFERENCE</text>
+</svg>

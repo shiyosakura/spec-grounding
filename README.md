@@ -6,6 +6,10 @@
 
 The only difference was six Markdown files.
 
+<p align="center">
+  <img src="docs/hero-cascade.svg" alt="How one data-type decision cascades into 6 test failures" width="820">
+</p>
+
 ---
 
 ## The Problem

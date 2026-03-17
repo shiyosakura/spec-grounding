@@ -5,6 +5,10 @@
 
 違いはMarkdownファイル6本だけでした。
 
+<p align="center">
+  <img src="docs/hero-cascade.svg" alt="1つのデータ型の判断が6件のテスト失敗に連鎖する様子" width="820">
+</p>
+
 ---
 
 ## 問題
