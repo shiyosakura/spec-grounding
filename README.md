@@ -1,270 +1,269 @@
-[日本語版はこちら](README.ja.md)
+[English version](README.en.md)
+# Spec Grounding -AIにはデータの形を先に決めてから頼め
 
-# Spec Grounding
+**同じAI、同じ変更依頼を5回ずつ。仕様書を渡したら35/35合格。渡さなければ5/35。**
 
-**Same AI. Same change request. 5 runs each. With a spec: 35/35 passed. Without: 5/35.**
-
-The only difference was six Markdown files.
+違いはMarkdownファイル6本だけでした。
 
 <p align="center">
-  <img src="docs/hero-cascade.svg" alt="How one data-type decision cascades into 6 test failures" width="820">
+  <img src="docs/hero-cascade-ja.svg" alt="1つのデータ型の判断が6件のテスト失敗に連鎖する様子" width="820">
 </p>
 
 ---
 
-## The Problem
+## 問題
 
-Vibe coding works surprisingly well for generating an initial app. The problem starts when you need to change something.
+バイブコーディングは初期アプリの生成には驚くほどうまく機能します。問題が始まるのは、何かを変更する必要が出てきたときです。
 
-I asked the same AI model (Claude Sonnet 4.6 via Claude Code) to make the same change to a salon reservation system: switch from a simple binary cancellation policy to a tiered one (free if 72h+ before, 50% fee if 24–72h, 100% if under 24h).
+同じAIモデル（Claude Sonnet 4.6、Claude Code経由）に、サロン予約システムへ同じ変更を依頼してみました。単純な二値キャンセルポリシーを段階制に変更する（72時間以上前なら無料、24〜72時間前なら50%、24時間未満なら100%のキャンセル料）という内容です。
 
-One version received the change request as a natural language instruction:
+一方にはこの自然言語の指示を渡しました：
 
-> "Change the cancellation policy of this salon reservation app to a tiered system. Currently it's just a binary choice of whether it's a same-day cancellation, but I want it so that cancellations 72+ hours before are free, 24–72 hours before incur a 50% fee, and under 24 hours incur a 100% fee. No-shows are 100%. No fee for reservation modifications."
+> 「このサロン予約アプリのキャンセルポリシーを段階制に変更してほしい。今は当日キャンセルかどうかの二択だけど、72時間以上前なら無料、24〜72時間前なら50%、24時間未満なら100%のキャンセル料がかかるようにしたい。ノーショーは100%。予約変更の場合はキャンセル料なし。」
 
-The other received an updated 6-file specification (~800 lines) defining exactly what data fields to add, what types they have, and how each process references them.
+もう一方には、追加すべきデータフィールド・型・各処理からの参照方法を正確に定義した6ファイルの更新仕様書（約800行）を渡しました。
 
-Both versions built successfully. Both understood the requirement. Then I ran 7 behavioral tests:
+両方ともビルドは成功し、両方とも要件をちゃんと理解していました。そこで7つの振る舞いテストを実行してみました：
 
-| Test | With Spec | Without Spec |
+| テスト | 仕様書あり | 仕様書なし |
 |------|:---------:|:------------:|
-| Cancel 72h+ before → fee = ¥0, no penalty | PASS | FAIL |
-| Cancel 24–72h before → fee = 50%, penalty +1 | PASS | FAIL |
-| Cancel < 24h before → fee = 100%, penalty +1 | PASS | FAIL |
-| No-show → fee = 100%, penalty +1 | PASS | FAIL |
-| Modification → fee = ¥0, no penalty | PASS | FAIL |
-| `cancellation_fee` field exists on record | PASS | FAIL |
-| Penalty limit blocks new reservations | PASS | PASS |
-| **Total** | **7/7** | **1/7** |
+| 72時間以上前にキャンセル → 料金¥0、ペナルティなし | PASS | FAIL |
+| 24〜72時間前にキャンセル → 料金50%、ペナルティ+1 | PASS | FAIL |
+| 24時間未満にキャンセル → 料金100%、ペナルティ+1 | PASS | FAIL |
+| ノーショー → 料金100%、ペナルティ+1 | PASS | FAIL |
+| 予約変更 → 料金¥0、ペナルティなし | PASS | FAIL |
+| `cancellation_fee` フィールドがレコードに存在する | PASS | FAIL |
+| ペナルティ上限で新規予約をブロック | PASS | PASS |
+| **合計** | **7/7** | **1/7** |
 
-I repeated this experiment 5 times independently — fresh generation each time, no prior results in context.
+この実験を各5回、毎回まっさらな状態から独立して繰り返しました。
 
-| Trial | With Spec | Without Spec |
-|-------|:---------:|:------------:|
+| Trial | 仕様書あり | 仕様書なし |
+|-------|:---------:|:----------:|
 | 1 | 7/7 | 1/7 |
 | 2 | 7/7 | 1/7 |
 | 3 | 7/7 | 1/7 |
 | 4 | 7/7 | 1/7 |
 | 5 | 7/7 | 1/7 |
 
-Zero variance across all 10 runs. Full details in [`benchmark/results/benchmark-n5-result.md`](benchmark/results/benchmark-n5-result.md).
+全10回を通じて分散ゼロ。詳細は [`benchmark/results/benchmark-n5-result.md`](benchmark/results/benchmark-n5-result.md) を参照。
 
-To verify this result isn't an artifact of field-name assumptions in the test suite, I re-ran the cancellation tests using a field-name-agnostic method: instead of checking specific field names, the test scans all numeric fields in the response for the expected yen amount. Spec: 3/3. Vibe: 1/3 — the same gap. Applying the identical method to a simpler change (adding a ¥500 nomination fee) showed no difference: 3/3 vs 3/3. The gap appears only when the change requires a non-obvious data structure decision. Details in [`benchmark/results/field-agnostic-benchmark-2026-03-16.md`](benchmark/results/field-agnostic-benchmark-2026-03-16.md).
+念のため、フィールド名に依存しない方法でも検証しました。特定のフィールド名はチェックせず、レスポンスの全数値フィールドを走査して期待される円金額があるかだけを見る方式です。結果: Spec版 3/3、Vibe版 1/3 — 同じ差。同じ手法を単純な変更（¥500の指名料追加）に適用すると 3/3 vs 3/3で差は出ません。差が出るのはデータ構造の判断が非自明な場合だけです。詳細は [`benchmark/results/field-agnostic-benchmark-2026-03-16.md`](benchmark/results/field-agnostic-benchmark-2026-03-16.md) を参照。
 
-## What Went Wrong
 
-The AI didn't misunderstand the requirement. It implemented the tiered logic correctly in both cases.
+## 何が起きたのか
 
-The difference was a single data structure decision:
+AIは別に要件を誤解したわけではありません。どちらのケースでも段階制ロジックを正しく実装していました。
 
-| | With Spec | Without Spec |
+違いはたった1つのデータ構造の判断でした：
+
+| | 仕様書あり | 仕様書なし |
 |---|---|---|
-| What gets stored | `cancellation_fee` = amount in yen (¥2,250) | `cancellation_fee_rate` = percentage (50) |
-| Policy storage | Dedicated `cancellation_policy` table | Key-value pairs in `system_settings` |
+| 保存するもの | `cancellation_fee` = 金額（¥2,250） | `cancellation_fee_rate` = 料率（50） |
+| ポリシーの格納方法 | 専用の `cancellation_policy` テーブル | `system_settings` のキーバリュー |
 
-The spec explicitly defined `cancellation_fee` as an integer field storing yen amounts. Without that definition, the AI made a reasonable but different choice — storing the rate instead of the amount.
+仕様書では `cancellation_fee` を円金額を保存するINTEGERフィールドとして明示的に定義していました。その定義がなければ、AIは合理的だが異なる選択 — 金額ではなく料率を保存する — をしました。
 
-**Here's how one decision cascaded into six failures:** the vibe version stored only the rate (%) in the database, not the computed amount (¥). Its cancel endpoint did compute the yen amount in the response, but the reservation list API returned database columns as-is — so the `cancellation_fee` field simply didn't exist on reservation records. Every test that checked the persisted fee amount failed, not because the tier logic was wrong, but because the data wasn't where downstream code expected it.
+**1つの判断がどう6件の失敗に連鎖したか：** バイブ版はDB上に料率（%）のみを保存し、計算された金額（¥）は保存しませんでした。キャンセル実行時のAPIレスポンスでは円金額を計算して返していましたが、予約一覧APIはDBカラムをそのまま返すため、予約レコードに `cancellation_fee` フィールドが存在しませんでした。永続化された料金額をチェックする全テストが失敗したのは、段階計算ロジックが間違っていたからではなく、下流のコードが期待する場所にデータがなかったからです。
 
-This wasn't a one-off accident. In 5 independent runs, every vibe-coded version made the same choice: store `cancellation_fee_rate` (a percentage) instead of `cancellation_fee` (a yen amount). 0 out of 5 stored the computed amount. Without a data structure definition, the AI defaults to the same reasonable-but-wrong decision every time.
+これは1回だけの偶然ではありません。5回の独立した試行で、バイブ版は毎回同じ選択をしました — `cancellation_fee`（円額）ではなく `cancellation_fee_rate`（パーセンテージ）を保存したのです。5回中5回です。データ構造の定義がなければ、AIは毎回同じ「合理的だが噛み合わない」判断に落ち着つくということを意味しています。
 
 ---
 
-This repository demonstrates two claims: **reliability under change**, and **scalability to larger systems.** The salon benchmark above covers the first. The next section covers both.
+このリポジトリは2つの主張を実証したいと考えています：**変更に対する信頼性**と、**大規模システムへのスケーラビリティ**。上記のサロンベンチマークが前者、次のセクションが両方を検証しています。
 
-## Case 2: Does It Scale?
+## 事例2：スケールするか？
 
-The salon reservation system was small — 6 screens, 13 APIs. Can the same approach handle a larger system with real feature changes?
+サロン予約システムは小規模でした — 6画面、13 API。同じアプローチで大規模なシステムの機能追加に対応できるのか？の検証です。
 
-I generated a **BtoB Sales Management System** from 8 specification files (2,708 lines of spec):
+8本の仕様書ファイル（合計2,708行）から**BtoB販売管理システム**を生成しました。
 
-| | Salon Reservation | BtoB Sales Management | Scale |
+| | サロン予約 | BtoB販売管理 | スケール |
 |---|:-:|:-:|:-:|
-| Spec files | 6 | 8 | 1.3x |
-| Spec lines | ~800 | 2,708 | 3.4x |
-| Screens | 6 | 16 | 2.7x |
-| API routes | 13 | 29 | 2.2x |
-| Lines of code | 2,861 | 9,390 | **3.3x** |
-| Build result | First pass | First pass | — |
-| Manual fixes | 0 | 0 | — |
+| 仕様書ファイル数 | 6 | 8 | 1.3x |
+| 仕様書行数 | 約800 | 2,708 | 3.4x |
+| 画面数 | 6 | 16 | 2.7x |
+| APIルート数 | 13 | 29 | 2.2x |
+| コード行数 | 2,861 | 9,390 | **3.3x** |
+| ビルド結果 | 一発成功 | 一発成功 | — |
+| 手動修正 | 0 | 0 | — |
 
-16 screens covering the full order-to-cash cycle: quotations, orders, inventory, shipping, invoicing, payments, and master data management. Every screen generated from spec. Zero manual fixes. Single build pass.
+見積→受注→在庫→出荷→請求→入金のフルサイクルをカバーする16画面。すべて仕様書から生成、手動修正ゼロ、ビルド一発成功です。
 
-I then ran three different change requests against this system — each tested with both a spec-driven and a vibe-coded version:
+このシステムに対して3種類の仕様変更を実施し、それぞれ仕様書あり/なしで比較しました：
 
-| Change | Modules Affected | With Spec | Without Spec |
-|--------|-----------------|:---------:|:------------:|
-| Volume discount (tiered pricing) | Orders | 7/7 | 7/7 |
-| Credit limit enforcement | Orders, Billing, Payments | 5/5 | 4/5 |
-| Returns + credit notes | Shipping, Inventory, Billing, Reconciliation | **8/8** | **2/8** |
+| 変更内容 | 影響モジュール | 仕様書あり | 仕様書なし |
+|---------|--------------|:---------:|:----------:|
+| 数量値引き（段階制） | 受注 | 7/7 | 7/7 |
+| 与信限度額チェック厳格化 | 受注・請求・入金 | 5/5 | 4/5 |
+| 返品＋クレジットノート | 出荷・在庫・請求・消込 | **8/8** | **2/8** |
 
-The pattern matches the salon finding. Simple, additive changes (volume discount) work fine without a spec — 7/7 on both sides. The gap appears when the change requires deciding *how to represent new data within existing structures*.
+サロンと同じパターンが再現しました。単純な追加変更（数量値引き）では仕様書なしでも7/7。差が出るのは、既存のデータ構造をどう再利用するかの判断が必要な変更です。
 
-In the returns case, the vibe prompt explicitly said "credit note (negative invoice)." The AI understood the concept but created a separate `credit_notes` table instead of storing negative amounts in the existing `invoices` table. This broke integration with billing, reconciliation, and outstanding balance calculation — 6 of 8 tests failed. Same pattern as the salon: understanding is not the problem; choosing the right data structure is.
+返品処理では、バイブプロンプトに「クレジットノート（マイナスの請求書）」と明示しました。AIはその概念を理解しましたが、既存の `invoices` テーブルに負値で格納する代わりに、別の `credit_notes` テーブルを新設しました。この1つのデータ構造の判断が、請求・消込・未払残高の連携を破壊し、8テスト中6テストが失敗しました。サロンのキャンセル料とまったく同じ構図 — AIは要件を正しく理解している、ただデータの置き場所が違う。
 
-Full results: [returns](benchmark/results/returns-benchmark-2026-03-16.md) | [volume discount](benchmark/results/volume-discount-benchmark-2026-03-16.md) | [credit limit](benchmark/results/credit-limit-benchmark-2026-03-16.md)
+詳細結果: [返品](benchmark/results/returns-benchmark-2026-03-16.md) | [数量値引き](benchmark/results/volume-discount-benchmark-2026-03-16.md) | [与信](benchmark/results/credit-limit-benchmark-2026-03-16.md)
 
-**[Explore the returns specification interactively →](https://shiyosakura.github.io/githubpage/)**
+**[返品仕様書のトレーサビリティを確認 →](https://shiyosakura.github.io/githubpage/)**
 
 ---
 
-## What Makes These Specs Different
+## この仕様書は何が違うのか
 
-Most specifications describe behavior in natural language. These specs are different — every statement is anchored to a concrete data field.
+一般的な仕様書は振る舞いを自然言語で記述しますが、この仕様書は異なります — すべての記述が具体的なデータフィールドに紐づいています。
 
-### Every field reference is explicit
+### すべてのフィールド参照が明示的
 
-All data references use backtick notation tied to defined field names. There are no ambiguous phrases like "the customer's name" — instead, every reference resolves to a specific table and column:
-
-```
-Join `Customer Master` to attach
-`Customer Master[quotation_data.customer_id].customer_name` to each row.
-```
-
-This means the AI never has to guess which table a piece of data comes from or what a field is called. Every backtick reference maps 1:1 to a field in the data structure definitions.
-
-### Every branch has an else
-
-Specifications typically describe what happens when a condition is true. These specs describe both sides of every branch:
+データ参照はすべて、定義済みフィールド名に紐づくバッククォート記法を使います。「顧客の名前」のような曖昧な表現はありません。すべての参照が特定のテーブルとカラムに解決されます：
 
 ```
-- If a special price record exists (`unit_price_master_id` ≥ 1)
-  ⇒ Set `quotation_line_item.unit_price` to
-    `Unit Price Master[unit_price_master_id].special_price`
-- If no matching special price record exists
-  ⇒ Set `quotation_line_item.unit_price` to
-    `Product Master[product_id].standard_unit_price`
+`Customer Master` をJOINし、各行に `Customer Master[quotation_data.customer_id].customer_name` を付加する。
 ```
 
-No implicit defaults. No "otherwise, do nothing." The AI sees the complete decision tree, not just the happy path.
+上記のような記述となり、AIはデータがどのテーブルから来るのか、フィールド名が何なのかを推測する必要がありません。すべてのバッククォート参照がデータ構造定義のフィールドと1:1で対応します。
 
-### Fixed §2 / §3 / §4 structure
+### すべての分岐にelseがある
 
-Every process follows the same three-section format:
+一般的な仕様書は条件が真の場合に何が起きるかを記述しますが、この仕様書はすべての分岐の両側を記述します：
 
-| Section | Role | What it answers |
+```
+- 特価レコードが存在する場合（`unit_price_master_id` ≥ 1）
+  ⇒ `quotation_line_item.unit_price` に
+    `Unit Price Master[unit_price_master_id].special_price` をセット
+- 該当する特価レコードが存在しない場合
+  ⇒ `quotation_line_item.unit_price` に
+    `Product Master[product_id].standard_unit_price` をセット
+```
+
+暗黙のデフォルトを完全に禁止して、仕様書の時点で必ず「それ以外の場合は…」で例外が漏れることを防止します。AIは正常に動いた場合の流れだけでなく、例外も含めた全体の流れを見てコードを書くことができます。
+
+### 固定の §2 / §3 / §4 構造
+
+すべての処理が同じ3セクション構成に従います：
+
+| セクション | 役割 | 答える問い |
 |---------|------|-----------------|
-| **§2** — Condition Judgments | Branching logic only. No data writes. | "Which path do we take?" |
-| **§3** — Data Update | Step-by-step data operations (retrieve, join, filter, write). | "What data changes?" |
-| **§4** — Display Updates | UI rendering rules: what to show, what format, what formula. | "What does the user see?" |
+| **§2** — 判定処理 | 分岐ロジックのみ。データ書き込みなし | 「どの経路を取るか？」 |
+| **§3** — データ更新処理 | ステップごとのデータ操作（取得・結合・フィルタ・書き込み） | 「どのデータが変わるか？」 |
+| **§4** — 表示更新処理 | UI描画ルール：何を表示し、どの書式で、どの計算式で | 「ユーザーに何を見せるか？」 |
 
-This separation means the AI never conflates "deciding what to do" with "doing it" with "showing the result." Each section has one job.
+この分離により、AIが「何をするか決める」「実行する」「結果を表示する」を混同することがなくなります。各セクションには1つの仕事しかないからです。
 
-### The result: traceable, verifiable specifications
+### 結果：追跡可能で検証可能な仕様書
 
-These patterns are not just style choices. They enable automated verification: every backtick reference can be checked against the data structure definitions. If a spec references a field that doesn't exist, or if a defined field is never referenced, the system catches it before any code is generated.
+これらのパターンは単なる仕様書スタイル上の選択ではなく、AIによる自動検証を可能にするためのものです。すべてのバッククォート参照をデータ構造定義と照合できます。仕様書が存在しないフィールドを参照していたり、定義されたフィールドがどの仕様書からも参照されていなければ、コード生成前にシステムが検出します。
 
-**[Explore the specifications interactively →](https://shiyosakura.github.io/githubpage/)**
+**[データ構造と仕様書の関連が確認可能なViewer →](https://shiyosakura.github.io/githubpage/)**
 
-The traceability viewer shows the three-layer structure — SIP analysis, data definitions, and specifications — with clickable links between them.
+トレーサビリティビューアは3層構造となっていて、 — SIP分析・データ定義・仕様書の3層構造を、クリックで相互に辿れます。
 
 ---
 
-## How Spec Grounding Works
+## Spec Groundingの仕組み
 
-Code manipulates data. UI displays data. APIs transfer data. Everything depends on data structure — yet when you give an AI a natural language change request, the AI has to make dozens of implicit decisions about it: what fields to add, what types to use, what to store vs. what to compute on the fly. These decisions are reasonable in isolation, but they compound. A single field stored as a percentage instead of an amount breaks every downstream query, every UI display, every test. **The bottleneck is not the AI's intelligence — it's the absence of data structure decisions in the input.**
+コードはデータを操作し、UIはデータを表示し、APIはデータを転送します。すべてがデータ構造に依存しています。しかしAIに自然言語の変更依頼を渡すと、AIはデータ構造について数十の暗黙の判断を下さなければなりません。どのフィールドを追加するか、どの型を使うか、何を保存し何をその場で計算するか。これらの判断は個々には合理的ですが、積み重なっていくと整合性に問題が出る可能性があります。1つのフィールドを金額ではなくパーセンテージで保存しただけで、下流のすべてのクエリ、すべてのUI表示、すべてのテストが壊れます。**ボトルネックはAIの知性ではなく、人間が入力したものにデータ構造の決定がないことです。**
 
-The idea of generating code from schemas is not new — schema-driven generation, TDD, and DSL-based approaches all exist. Spec Grounding differs in that the data structure doesn't produce code directly. It produces *human-reviewable specifications* as an intermediate layer: the data structure constrains the spec, and the spec constrains the code. This middle layer is where ambiguity gets caught — before it reaches the codebase.
+スキーマからコードを生成するという発想自体は新しくありません。schema-driven generation、TDD、DSLベースのアプローチはすでに存在します。Spec Groundingが異なるのは、データ構造からコードを直接生成しない点です。データ構造は*人間がレビュー可能な仕様書*を中間層として生成し、その仕様書がコードを制約します。曖昧さが検出されるのはこの中間層 — コードベースに届く前です。
 
-The process has three layers, each depending on the one above:
+プロセスは3つの層から成り、それぞれが上位層に依存します：
 
 ```
-SIP (Screen–Input–Process analysis)
-  ↓ determines what data is needed
-Data Structure Definitions
-  ↓ each spec section references concrete fields
-Detailed Specifications
-  ↓ deterministic input for code generation
-Code
+SIP（画面・入力・処理の分析）
+  ↓ 必要なデータを決定
+データ構造定義
+  ↓ 各仕様セクションが具体的なフィールドを参照
+詳細仕様書
+  ↓ コード生成への決定論的な入力
+コード
 ```
 
-**SIP** analyzes each screen to identify every piece of displayed information, every user action, and every background process. This produces a complete inventory of what data the system must handle.
+**SIP** は各画面を分析し、表示される情報・ユーザーの操作・バックグラウンド処理をすべて特定します。これにより、システムが扱うべきデータの完全な目録が作られます。
 
-**Data Structure Definitions** formalize that inventory into three categories:
+**データ構造定義** はその目録を3つのカテゴリに分類します：
 
-- Master data (read-only reference tables)
-- Persistent data (saved state that changes over time)
-- Screen data (temporary data for UI rendering)
+- マスターデータ（読み取り専用の参照テーブル）
+- 永続変動データ（時間とともに変化する保存状態）
+- 画面データ（UI描画用の一時データ）
 
-Every field has a name, type, range, default value, and description.
+そしてすべてのフィールドに名前・型・範囲・デフォルト値・説明を入れます。
 
-**Detailed Specifications** reference these data definitions directly. Each business rule is written as "read field X, check condition Y, write field Z." There is no room for the AI to improvise a data structure.
+**詳細仕様書** はこれらのデータ定義を直接参照します。すべて「フィールドXを読み、条件Yを判定し、フィールドZに書き込む」というようにデータ構造に基づくルールで記述されます。AIがデータ構造を即興で作る余地がないのです。
 
-When a requirement changes, you update the data structure first, then propagate the change through every spec section that references the affected fields. This is what happened in the benchmark: the cancellation policy change touched 6 files and 29 lines, all traceable from the data structure outward.
+もし要件が変更されたら、まずデータ構造を更新し、影響するフィールドを参照するすべての仕様セクションに変更を伝播させます。ベンチマークではまさにこれが起きました。キャンセルポリシーの変更は6ファイル・29行に及びましたが、すべてデータ構造から外側に向かって追跡可能でした。
 
-### The specs themselves are AI-generated
+### 仕様書自体がAI生成
 
-Writing 800 lines of specification by hand would defeat the purpose. The specifications in this repository were generated using Claude Code with a set of domain knowledge files and a multi-agent workflow. The knowledge base contains structural patterns for target categories (e.g., reservation systems, sales management), and each agent stage (SIP analysis → data structure definition → detailed specification) takes the output of the previous stage as its input. Automated consistency checks verify that every field reference resolves to a defined data structure and that every defined field appears in at least one specification. The human role is review and approval at stage boundaries — not authoring.
+とはいえ、800行の仕様書を手書きするのでは本末転倒で、そんなことやってられないと言われることでしょう。ですが、このリポジトリの仕様書は、Claude Code上に構築したドメインナレッジファイル群とマルチエージェントワークフローによって生成されました。ナレッジベースが対象カテゴリ（予約システム、販売管理など）の構造パターンを供給し、各エージェント段階（SIP分析→データ構造定義→詳細仕様書）が前段階の出力を入力として受け取ります。自動整合性チェックが、すべてのフィールド参照がデータ構造定義に存在するか、定義されたすべてのフィールドが少なくとも1つの仕様書で参照されているかを検証します。人間の役割はレビューを求められた時の対応とEnterキーをたくさん押すことくらいです。
 
-## Key Insight
+## 核心
 
-Both AIs understood the requirement. Both implemented the tiered logic correctly. The difference was not intelligence — it was data structure.
+冒頭のサロンのテストにおいて、どちらのAIも要件を正しく理解し、段階制ロジックも正しく実装してはいました。差がついたのはAIの賢さではなく、データ構造の有無だと考えています。
 
-**The spec doesn't tell the AI what to think. It tells the AI what data to produce.**
+**仕様書はAIに何を考えるかを教えるのではなく、データの形を教えるのだ**
 
-## Repository Structure
+## リポジトリ構成
 
 ```
 benchmark/
 ├── specs/
-│   ├── before/              # Salon: original specification (6 files)
-│   ├── after/               # Salon: tiered cancellation (6 files)
-│   ├── after-nomination/    # Salon: nomination fee addition (6 files)
-│   ├── sales/               # BtoB: base specification (8 files)
-│   ├── sales-after-credit/  # BtoB: credit limit enforcement
-│   ├── sales-after-discount/# BtoB: volume discount
-│   └── sales-after-returns/ # BtoB: returns + credit notes
-├── app-spec/                # Salon: generated from spec
-├── app-vibe/                # Salon: generated from natural language
-├── app-sales*/              # BtoB: base + 3 change pairs (spec/vibe each)
-├── tests/                   # All test suites (Vitest)
-└── results/                 # Benchmark result reports
+│   ├── before/              # サロン: 変更前仕様書（6ファイル）
+│   ├── after/               # サロン: 段階制キャンセル（6ファイル）
+│   ├── after-nomination/    # サロン: 指名料追加（6ファイル）
+│   ├── sales/               # BtoB: ベース仕様書（8ファイル）
+│   ├── sales-after-credit/  # BtoB: 与信チェック厳格化
+│   ├── sales-after-discount/# BtoB: 数量値引き
+│   └── sales-after-returns/ # BtoB: 返品＋クレジットノート
+├── app-spec/                # サロン: 仕様書から生成
+├── app-vibe/                # サロン: 自然言語から生成
+├── app-sales*/              # BtoB: ベース + 3変更ペア（spec/vibe各1）
+├── tests/                   # 全テストスイート（Vitest）
+└── results/                 # ベンチマーク結果レポート
 
-# Interactive traceability viewer (separate repository):
+# インタラクティブ・トレーサビリティビューア（別リポジトリ）:
 # https://shiyosakura.github.io/githubpage/
 ```
 
-## Reproduce the Benchmark
+## ベンチマークの再現
 
-### Salon Reservation — Change Tracking
+### サロン予約 — 変更追従
 
 ```bash
-# 1. Start the spec-driven app
+# 1. 仕様書ベースのアプリを起動
 cd benchmark/app-spec
 npm install && rm -f salon.db && npx next start -p 3097
 
-# 2. Start the vibe-coded app (in another terminal)
+# 2. バイブコーディング版を起動（別ターミナル）
 cd benchmark/app-vibe
 npm install && rm -f salon.db && npx next start -p 3098
 
-# 3. Run tests against each (in another terminal)
+# 3. テスト実行（別ターミナル）
 cd benchmark/tests && npm install
 
-BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose  # spec: all pass
-BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose  # vibe: cancellation fees fail
+BASE_URL=http://localhost:3097 npx vitest run --reporter=verbose  # spec: 全テスト合格
+BASE_URL=http://localhost:3098 npx vitest run --reporter=verbose  # vibe: キャンセル料テスト失敗
 
-# Run only field-agnostic tests
+# フィールド名非依存テストのみ実行
 BASE_URL=http://localhost:3097 npx vitest run cancellation-fee-agnostic nomination-fee
 ```
 
-### BtoB Sales Management — Change Tracking + Scale
+### BtoB販売管理 — 変更追従 + スケール
 
-The BtoB app is not included in this repository (it can be regenerated from the specs). To reproduce: generate an app from `benchmark/specs/sales/`, then run tests against it.
+BtoBアプリ本体はこのリポジトリには含まれていません（仕様書から再生成可能です）。再現するには `benchmark/specs/sales/` からアプリを生成し、テストを実行してください。
 
 ```bash
-# Run BtoB tests against a running app
+# 起動中のBtoBアプリに対してテスト実行
 cd benchmark/tests && npm install
 BASE_URL=http://localhost:3001 npx vitest run returns --reporter=verbose
 BASE_URL=http://localhost:3001 npx vitest run volume-discount --reporter=verbose
 BASE_URL=http://localhost:3001 npx vitest run credit-limit --reporter=verbose
 ```
 
-## Environment
+## 環境
 
-- AI Model: Claude Sonnet 4.6 (via Claude Code) — used for all benchmark code generation
-- Framework: Next.js 16, TypeScript, Tailwind CSS, SQLite (better-sqlite3)
-- Test framework: Vitest 3.2.4
+- AIモデル: Claude Sonnet 4.6（Claude Code経由） — 全ベンチマークのコード生成に使用
+- フレームワーク: Next.js 16, TypeScript, Tailwind CSS, SQLite (better-sqlite3)
+- テストフレームワーク: Vitest 3.2.4
 
-## License
+## ライセンス
 
 MIT
